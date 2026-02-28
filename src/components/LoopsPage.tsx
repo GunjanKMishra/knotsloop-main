@@ -263,61 +263,92 @@ export default function LoopsPage({ onBack }: LoopsPageProps) {
               </div>
             </div>
 
-            <div className="space-y-4">
-              {currentLoop?.knots.map((knot) => (
-                <div key={knot.id} className="space-y-2">
-                  <div className="flex items-start gap-3">
-                    <div className="flex flex-col items-center">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        selectedKnot === knot.id ? 'bg-cyan-500' : 'bg-gray-300'
-                      }`}>
-                        <div className="w-3 h-3 bg-white rounded-full" />
+            <div className="space-y-0">
+              {(currentLoop?.knots && currentLoop.knots.length > 0 ? currentLoop.knots : [
+                { id: '1', title: 'Introduction to Philosophy', order_index: 0, videos: [
+                  { id: 'v1', title: 'Akad bakad Bambe Bo', url: '', video_id: '', order_index: 0 },
+                  { id: 'v2', title: 'Bakad Akad Bo Bambe', url: '', video_id: '', order_index: 1 },
+                ] },
+                { id: '2', title: 'Ancient Greek Philosophy', order_index: 1, videos: [] },
+                { id: '3', title: 'Medieval Philosophy', order_index: 2, videos: [] },
+              ]).map((knot, knotIdx, allKnots) => {
+                const isSelected = selectedKnot === knot.id || (!currentLoop?.knots.length && knotIdx === 0);
+                const hasVideos = knot.videos.length > 0;
+
+                return (
+                  <div key={knot.id}>
+                    <button
+                      onClick={() => {
+                        setSelectedKnot(knot.id);
+                        if (knot.videos.length > 0) {
+                          setSelectedVideo(knot.videos[0]);
+                        }
+                      }}
+                      className="w-full flex items-start gap-3 py-3"
+                    >
+                      <div className="flex flex-col items-center">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                          isSelected ? 'bg-cyan-500' : 'bg-white'
+                        }`}>
+                          <div className={`w-3 h-3 rounded-full ${
+                            isSelected ? 'bg-white' : 'bg-cyan-500'
+                          }`} />
+                        </div>
                       </div>
-                      {knot !== currentLoop.knots[currentLoop.knots.length - 1] && (
-                        <div className="w-0.5 h-12 bg-gray-300 my-1" />
-                      )}
-                    </div>
-                    <div className="flex-1 pt-1">
-                      <h3 className="font-medium text-gray-800">{knot.title}</h3>
-                    </div>
+                      <div className="flex-1 pt-2 text-left">
+                        <h3 className={`font-medium transition-colors ${
+                          isSelected ? 'text-gray-900' : 'text-gray-700'
+                        }`}>
+                          {knot.title}
+                        </h3>
+                      </div>
+                    </button>
+
+                    {knotIdx < allKnots.length - 1 && (
+                      <div className="flex items-start gap-3">
+                        <div className="flex flex-col items-center" style={{ width: '40px' }}>
+                          <div className="w-0.5 bg-cyan-500" style={{ height: isSelected && hasVideos ? `${knot.videos.length * 48 + 80}px` : '40px' }} />
+                        </div>
+                        <div className="flex-1" />
+                      </div>
+                    )}
+
+                    {isSelected && hasVideos && (
+                      <div className="flex items-start gap-3 -mt-8">
+                        <div className="flex flex-col items-center" style={{ width: '40px' }}>
+                          <div className="w-0.5 bg-cyan-500 h-8" />
+                        </div>
+                        <div className="flex-1 space-y-3 pb-4">
+                          {knot.videos.map((video, videoIdx) => (
+                            <button
+                              key={video.id}
+                              onClick={() => setSelectedVideo(video)}
+                              className="w-full text-left"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`w-3 h-3 rounded-full ${
+                                  selectedVideo?.id === video.id ? 'bg-cyan-500' : 'bg-gray-300'
+                                }`} />
+                                <span className={`text-sm ${
+                                  selectedVideo?.id === video.id ? 'text-gray-900 font-medium' : 'text-gray-600'
+                                }`}>
+                                  {video.title}
+                                </span>
+                              </div>
+                            </button>
+                          ))}
+
+                          <div className="bg-white/60 rounded-lg p-3 mt-4">
+                            <span className="text-xs text-gray-600">
+                              There are some title which is now disclosed here
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  {selectedKnot === knot.id && (
-                    <div className="ml-11 space-y-2">
-                      {knot.videos.map((video) => (
-                        <button
-                          key={video.id}
-                          onClick={() => setSelectedVideo(video)}
-                          className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                            selectedVideo?.id === video.id
-                              ? 'bg-white shadow-sm'
-                              : 'hover:bg-white/50'
-                          }`}
-                        >
-                          <Play className="w-4 h-4 text-cyan-500" />
-                          <span className="flex-1 text-left text-sm text-gray-700">
-                            {video.title}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {video.duration || '12:00'}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {knot.videos.some((_, idx) => idx < knot.videos.length - 1) && selectedKnot === knot.id && (
-                    <div className="ml-11">
-                      <div className="flex items-center gap-3 p-3 bg-gray-100 rounded-lg">
-                        <Square className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">
-                          There are some title which is now disclosed here
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
