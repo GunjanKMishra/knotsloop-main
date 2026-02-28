@@ -247,108 +247,106 @@ export default function LoopsPage({ onBack }: LoopsPageProps) {
 
       <div className="max-w-screen-2xl mx-auto px-6 py-8">
         <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-3 bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-2xl p-6">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-3">Loop Content</h2>
-              <div className="bg-white rounded-lg p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-600">{calculateProgress()}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-cyan-500 h-2 rounded-full transition-all"
-                    style={{ width: `${calculateProgress()}%` }}
-                  />
-                </div>
+          <div className="col-span-3 bg-cyan-100 rounded-2xl overflow-hidden flex flex-col" style={{ minHeight: '80vh' }}>
+            <div className="p-5 pb-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-semibold text-cyan-700 uppercase tracking-widest">Progress</span>
+                <span className="text-xs font-bold text-cyan-700">{calculateProgress()}%</span>
+              </div>
+              <div className="w-full bg-cyan-200 rounded-full h-1.5">
+                <div
+                  className="bg-cyan-500 h-1.5 rounded-full transition-all"
+                  style={{ width: `${calculateProgress()}%` }}
+                />
               </div>
             </div>
 
-            <div className="space-y-0">
-              {(currentLoop?.knots && currentLoop.knots.length > 0 ? currentLoop.knots : [
-                { id: '1', title: 'Introduction to Philosophy', order_index: 0, videos: [
-                  { id: 'v1', title: 'Akad bakad Bambe Bo', url: '', video_id: '', order_index: 0 },
-                  { id: 'v2', title: 'Bakad Akad Bo Bambe', url: '', video_id: '', order_index: 1 },
-                ] },
-                { id: '2', title: 'Ancient Greek Philosophy', order_index: 1, videos: [] },
-                { id: '3', title: 'Medieval Philosophy', order_index: 2, videos: [] },
-              ]).map((knot, knotIdx, allKnots) => {
-                const isSelected = selectedKnot === knot.id || (!currentLoop?.knots.length && knotIdx === 0);
-                const hasVideos = knot.videos.length > 0;
+            <div className="flex-1 overflow-y-auto px-5 pb-6">
+              {(currentLoop?.knots && currentLoop.knots.length > 0 ? currentLoop.knots : []).map((knot, knotIdx, allKnots) => {
+                const isExpanded = selectedKnot === knot.id;
+                const isLastKnot = knotIdx === allKnots.length - 1;
 
                 return (
-                  <div key={knot.id}>
+                  <div key={knot.id} className="relative">
                     <button
                       onClick={() => {
-                        setSelectedKnot(knot.id);
-                        if (knot.videos.length > 0) {
-                          setSelectedVideo(knot.videos[0]);
+                        if (isExpanded) {
+                          setSelectedKnot(null);
+                        } else {
+                          setSelectedKnot(knot.id);
+                          if (knot.videos.length > 0 && !selectedVideo) {
+                            setSelectedVideo(knot.videos[0]);
+                          }
                         }
                       }}
-                      className="w-full flex items-start gap-3 py-3"
+                      className="w-full flex items-center gap-4 py-3 group"
                     >
-                      <div className="flex flex-col items-center">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                          isSelected ? 'bg-cyan-500' : 'bg-white'
+                      <div className="relative flex flex-col items-center flex-shrink-0" style={{ width: '24px' }}>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center z-10 transition-all ${
+                          isExpanded
+                            ? 'bg-cyan-500 border-cyan-500'
+                            : 'bg-white border-cyan-400 group-hover:border-cyan-500'
                         }`}>
-                          <div className={`w-3 h-3 rounded-full ${
-                            isSelected ? 'bg-white' : 'bg-cyan-500'
-                          }`} />
+                          {isExpanded && <div className="w-2 h-2 rounded-full bg-white" />}
                         </div>
                       </div>
-                      <div className="flex-1 pt-2 text-left">
-                        <h3 className={`font-medium transition-colors ${
-                          isSelected ? 'text-gray-900' : 'text-gray-700'
-                        }`}>
-                          {knot.title}
-                        </h3>
-                      </div>
+                      <span className={`text-sm font-medium text-left leading-snug transition-colors ${
+                        isExpanded ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'
+                      }`}>
+                        {knot.title}
+                      </span>
                     </button>
 
-                    {knotIdx < allKnots.length - 1 && (
-                      <div className="flex items-start gap-3">
-                        <div className="flex flex-col items-center" style={{ width: '40px' }}>
-                          <div className="w-0.5 bg-cyan-500" style={{ height: isSelected && hasVideos ? `${knot.videos.length * 48 + 80}px` : '40px' }} />
+                    {isExpanded && knot.videos.length > 0 && (
+                      <div className="flex gap-4 pb-2">
+                        <div className="flex flex-col items-center flex-shrink-0" style={{ width: '24px' }}>
+                          <div className="w-px flex-1 bg-cyan-400" />
                         </div>
-                        <div className="flex-1" />
-                      </div>
-                    )}
-
-                    {isSelected && hasVideos && (
-                      <div className="flex items-start gap-3 -mt-8">
-                        <div className="flex flex-col items-center" style={{ width: '40px' }}>
-                          <div className="w-0.5 bg-cyan-500 h-8" />
-                        </div>
-                        <div className="flex-1 space-y-3 pb-4">
-                          {knot.videos.map((video, videoIdx) => (
+                        <div className="flex-1 bg-white/70 rounded-xl p-3 mb-2 space-y-1">
+                          {knot.videos.map((video) => (
                             <button
                               key={video.id}
                               onClick={() => setSelectedVideo(video)}
-                              className="w-full text-left"
+                              className={`w-full text-left flex items-start gap-2 px-2 py-2 rounded-lg transition-colors group ${
+                                selectedVideo?.id === video.id
+                                  ? 'bg-cyan-500/10'
+                                  : 'hover:bg-cyan-50'
+                              }`}
                             >
-                              <div className="flex items-center gap-3">
-                                <div className={`w-3 h-3 rounded-full ${
-                                  selectedVideo?.id === video.id ? 'bg-cyan-500' : 'bg-gray-300'
-                                }`} />
-                                <span className={`text-sm ${
-                                  selectedVideo?.id === video.id ? 'text-gray-900 font-medium' : 'text-gray-600'
-                                }`}>
-                                  {video.title}
-                                </span>
-                              </div>
+                              <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 transition-colors ${
+                                selectedVideo?.id === video.id ? 'bg-cyan-500' : 'bg-gray-300 group-hover:bg-cyan-300'
+                              }`} />
+                              <span className={`text-xs leading-relaxed ${
+                                selectedVideo?.id === video.id ? 'text-gray-900 font-medium' : 'text-gray-600'
+                              }`}>
+                                {video.title}
+                              </span>
                             </button>
                           ))}
+                        </div>
+                      </div>
+                    )}
 
-                          <div className="bg-white/60 rounded-lg p-3 mt-4">
-                            <span className="text-xs text-gray-600">
-                              There are some title which is now disclosed here
-                            </span>
-                          </div>
+                    {!isLastKnot && (
+                      <div className="flex gap-4" style={{ height: isExpanded && knot.videos.length === 0 ? '8px' : '0' }}>
+                        <div className="flex flex-col items-center flex-shrink-0" style={{ width: '24px' }}>
+                          {!isExpanded && <div className="w-px bg-cyan-400" style={{ height: '16px' }} />}
                         </div>
                       </div>
                     )}
                   </div>
                 );
               })}
+
+              {(!currentLoop?.knots || currentLoop.knots.length === 0) && (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="w-10 h-10 rounded-full bg-cyan-200 flex items-center justify-center mb-3">
+                    <div className="w-4 h-4 rounded-full bg-cyan-400" />
+                  </div>
+                  <p className="text-sm text-gray-500">No knots yet</p>
+                  <p className="text-xs text-gray-400 mt-1">Add playlists to your loop</p>
+                </div>
+              )}
             </div>
           </div>
 
