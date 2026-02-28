@@ -58,6 +58,7 @@ export default function CreatorDashboard({ onClose, onLoopCreated, initialLoopId
   const [editingPlaylistId, setEditingPlaylistId] = useState<string | null>(null);
   const [editingLoopSectionId, setEditingLoopSectionId] = useState<string | null>(null);
   const [allPrimaryDisciplines, setAllPrimaryDisciplines] = useState<PrimaryDiscipline[]>([]);
+  const [syncingVideos, setSyncingVideos] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -85,6 +86,46 @@ export default function CreatorDashboard({ onClose, onLoopCreated, initialLoopId
       }
     } catch (err) {
       console.error('Error loading primary disciplines:', err);
+    }
+  };
+
+  const syncAllPlaylistVideos = async () => {
+    setSyncingVideos(true);
+    try {
+      const { data: playlists } = await supabase
+        .from('playlists')
+        .select('id, youtube_playlist_url')
+        .not('youtube_playlist_url', 'is', null);
+
+      if (!playlists) return;
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-playlist`;
+
+      for (const playlist of playlists) {
+        if (playlist.youtube_playlist_url) {
+          await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              playlistUrl: playlist.youtube_playlist_url,
+              playlistId: playlist.id,
+            }),
+          });
+        }
+      }
+
+      alert('Successfully synced all playlist videos!');
+    } catch (error) {
+      console.error('Error syncing videos:', error);
+      alert('Failed to sync videos. Please try again.');
+    } finally {
+      setSyncingVideos(false);
     }
   };
 
@@ -362,6 +403,13 @@ export default function CreatorDashboard({ onClose, onLoopCreated, initialLoopId
             <div className="max-w-7xl mx-auto px-8 py-4 flex items-center justify-between">
               <span className="text-xl font-bold text-brand-blue tracking-wider">KNOTLOOP</span>
               <div className="flex items-center gap-3">
+                <button
+                  onClick={syncAllPlaylistVideos}
+                  disabled={syncingVideos}
+                  className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium disabled:opacity-50"
+                >
+                  {syncingVideos ? 'Syncing...' : 'Sync Videos'}
+                </button>
                 <button className="px-8 py-2 bg-brand-blue text-white rounded-lg hover:bg-opacity-90 transition-colors text-sm font-medium">
                   Need Help?
                 </button>
