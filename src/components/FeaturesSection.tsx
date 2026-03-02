@@ -1,3 +1,5 @@
+'use client';
+
 export default function FeaturesSection() {
   const creatorFeatures = [
     { title: 'Custom subdomain', description: 'yourname.knotsloop.com' },

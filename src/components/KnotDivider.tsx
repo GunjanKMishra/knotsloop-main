@@ -1,3 +1,5 @@
+'use client';
+
 export default function KnotDivider() {
   return (
     <div className="py-12 flex justify-center items-center">

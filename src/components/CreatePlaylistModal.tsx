@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -299,7 +301,7 @@ export default function CreatePlaylistModal({
       if (currentPlaylistId) {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-playlist`;
+          const apiUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/fetch-playlist`;
 
           await fetch(apiUrl, {
             method: 'POST',

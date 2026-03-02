@@ -1,3 +1,5 @@
+'use client';
+
 import { Link2, Puzzle, Target, MessageCircle } from 'lucide-react';
 
 export default function StepsSection() {

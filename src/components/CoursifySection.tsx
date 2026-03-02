@@ -1,3 +1,5 @@
+'use client';
+
 export default function CoursifySection() {
   return (
     <section className="py-24 px-6 bg-gradient-to-br from-brand-light via-white to-white relative overflow-hidden">

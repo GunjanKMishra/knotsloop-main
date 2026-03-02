@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import SignupStep from './signup/SignupStep';
 import ProfileDetailsStep from './signup/ProfileDetailsStep';

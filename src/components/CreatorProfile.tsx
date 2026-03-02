@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import { LogOut, Settings, Users, Video, BookOpen, Edit2, ExternalLink, Eye } from 'lucide-react';
 import { supabase } from '../lib/supabase';

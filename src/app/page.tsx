@@ -1,18 +1,20 @@
-import { useState } from 'react';
-import Hero from './components/Hero';
-import StepsSection from './components/StepsSection';
-import ProblemSection from './components/ProblemSection';
-import SolutionSection from './components/SolutionSection';
-import FeaturesSection from './components/FeaturesSection';
-import CoursifySection from './components/CoursifySection';
-import FAQSection from './components/FAQSection';
-import WaitlistModal from './components/WaitlistModal';
-import CreatorSignup from './components/CreatorSignup';
-import CreatorProfile from './components/CreatorProfile';
-import Footer from './components/Footer';
-import KnotDivider from './components/KnotDivider';
+'use client';
 
-function App() {
+import { useState } from 'react';
+import Hero from '@/components/Hero';
+import StepsSection from '@/components/StepsSection';
+import ProblemSection from '@/components/ProblemSection';
+import SolutionSection from '@/components/SolutionSection';
+import FeaturesSection from '@/components/FeaturesSection';
+import CoursifySection from '@/components/CoursifySection';
+import FAQSection from '@/components/FAQSection';
+import WaitlistModal from '@/components/WaitlistModal';
+import CreatorSignup from '@/components/CreatorSignup';
+import CreatorProfile from '@/components/CreatorProfile';
+import Footer from '@/components/Footer';
+import KnotDivider from '@/components/KnotDivider';
+
+export default function HomePage() {
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
   const [isSignupOpen, setIsSignupOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -54,5 +56,3 @@ function App() {
     </div>
   );
 }
-
-export default App;

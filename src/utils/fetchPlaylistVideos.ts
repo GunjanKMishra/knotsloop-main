@@ -8,7 +8,7 @@ export async function fetchPlaylistVideos(playlistId: string, playlistUrl: strin
       throw new Error('No active session');
     }
 
-    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-playlist`;
+    const apiUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/fetch-playlist`;
 
     const response = await fetch(apiUrl, {
       method: 'POST',

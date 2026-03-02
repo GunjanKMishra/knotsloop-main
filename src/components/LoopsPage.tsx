@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { Play, Square, Sun, Eye, User, ArrowLeft } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -202,8 +204,8 @@ export default function LoopsPage({ onBack }: LoopsPageProps) {
             </div>
 
             <div className="flex gap-4 mt-1">
-              {currentLoop?.knots.length > 0 ? (
-                currentLoop.knots.map((knot, idx) => (
+              {(currentLoop?.knots?.length ?? 0) > 0 ? (
+                currentLoop?.knots.map((knot, idx) => (
                   <button
                     key={knot.id}
                     onClick={() => {
