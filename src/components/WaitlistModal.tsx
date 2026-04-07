@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X, Loader2, CheckCircle2 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { waitlist as mockWaitlist } from '../lib/mockData';
 
 interface WaitlistModalProps {
   isOpen: boolean;
@@ -25,25 +25,10 @@ export default function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
     setError('');
 
     try {
-      const { error: submitError } = await supabase
-        .from('waitlist')
-        .insert([
-          {
-            name: formData.name,
-            email: formData.email,
-            role: formData.role
-          }
-        ]);
-
-      if (submitError) {
-        if (submitError.code === '23505') {
-          setError('This email is already on the waitlist');
-        } else {
-          setError('Something went wrong. Please try again.');
-        }
-        setIsSubmitting(false);
-        return;
-      }
+      await mockWaitlist.create({
+        name: formData.name,
+        email: formData.email
+      });
 
       setIsSuccess(true);
       setTimeout(() => {

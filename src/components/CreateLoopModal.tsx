@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { loops as mockLoops } from '../lib/mockData';
 
 interface CreateLoopModalProps {
   onClose: () => void;
@@ -18,33 +18,14 @@ export default function CreateLoopModal({ onClose, onSuccess }: CreateLoopModalP
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setError('You must be logged in to create a loop');
-        return;
-      }
-
-      const { data: existingLoops } = await supabase
-        .from('loops')
-        .select('order_index')
-        .eq('creator_profile_id', user.id)
-        .order('order_index', { ascending: false })
-        .limit(1);
-
-      const nextOrderIndex = existingLoops && existingLoops.length > 0
-        ? existingLoops[0].order_index + 1
-        : 0;
-
-      const { error: insertError } = await supabase
-        .from('loops')
-        .insert({
-          creator_profile_id: user.id,
-          title: '',
-          status: 'draft',
-          order_index: nextOrderIndex,
-        });
-
-      if (insertError) throw insertError;
+      const newLoop = await mockLoops.create({
+        name: 'New Loop',
+        description: 'A new learning loop',
+        discipline_id: 'discipline-1',
+        videos: [],
+        duration: 0,
+        difficulty: 'beginner'
+      });
 
       onSuccess();
     } catch (err) {

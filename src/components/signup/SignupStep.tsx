@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { auth as mockAuth } from '../../lib/mockData';
 import { SignupData } from '../CreatorSignup';
 
 interface SignupStepProps {
@@ -34,18 +34,11 @@ export default function SignupStep({ data, updateData, onNext, onClose, onSucces
     setCheckingEmail(true);
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: newEmail,
-        password: '__dummy_password_check_12345__',
-      });
-
-      if (signInError) {
-        if (signInError.message.includes('Invalid login credentials') ||
-            signInError.message.includes('Email not confirmed')) {
-          setIsSignIn(true);
-        } else {
-          setIsSignIn(false);
-        }
+      const existingUser = await mockAuth.getCurrentUser();
+      if (existingUser && existingUser.email === newEmail) {
+        setIsSignIn(false);
+      } else {
+        setIsSignIn(true);
       }
     } catch {
       setIsSignIn(true);
@@ -65,41 +58,11 @@ export default function SignupStep({ data, updateData, onNext, onClose, onSucces
     setLoading(true);
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (authError) throw authError;
-
-      if (authData.user) {
-        const { data: profile } = await supabase
-          .from('creator_profiles')
-          .select('*')
-          .eq('id', authData.user.id)
-          .maybeSingle();
-
-        if (profile && profile.onboarding_completed) {
-          onSuccess();
-        } else {
-          updateData({ email });
-          if (profile) {
-            onNext();
-          } else {
-            const { error: profileError } = await supabase
-              .from('creator_profiles')
-              .insert({
-                id: authData.user.id,
-                user_type: data.userType,
-              });
-
-            if (profileError) throw profileError;
-            onNext();
-          }
-        }
-      }
+      const user = await mockAuth.signIn(email, password);
+      updateData({ email });
+      onNext();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'An error occurred during sign in');
+      setError(err instanceof Error ? err.message : 'Invalid email or password');
     } finally {
       setLoading(false);
     }
@@ -126,26 +89,9 @@ export default function SignupStep({ data, updateData, onNext, onClose, onSucces
     setLoading(true);
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (authError) throw authError;
-
-      if (authData.user) {
-        const { error: profileError } = await supabase
-          .from('creator_profiles')
-          .insert({
-            id: authData.user.id,
-            user_type: data.userType,
-          });
-
-        if (profileError) throw profileError;
-
-        updateData({ email, password });
-        onNext();
-      }
+      const user = await mockAuth.signUp(email, password, email);
+      updateData({ email, password });
+      onNext();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'An error occurred during signup');
     } finally {

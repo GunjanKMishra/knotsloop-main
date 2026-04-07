@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Edit, Circle } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { loops as mockLoops, disciplines as mockDisciplines } from '../lib/mockData';
 import CreateLoopModal from './CreateLoopModal';
 import CreatePlaylistModal from './CreatePlaylistModal';
 import EditSectionModal from './EditSectionModal';
@@ -78,14 +78,9 @@ export default function CreatorDashboard({ onClose, onLoopCreated, initialLoopId
 
   const loadAllPrimaryDisciplines = async () => {
     try {
-      const { data } = await supabase
-        .from('primary_disciplines')
-        .select('id, name')
-        .order('name');
-
-      if (data) {
-        setAllPrimaryDisciplines(data);
-      }
+      const allDisciplines = await mockDisciplines.getAll();
+      const primaryDisciplines = allDisciplines.map(d => ({ id: d.id, name: d.name }));
+      setAllPrimaryDisciplines(primaryDisciplines);
     } catch (err) {
       console.error('Error loading primary disciplines:', err);
     }
@@ -94,136 +89,50 @@ export default function CreatorDashboard({ onClose, onLoopCreated, initialLoopId
   const syncAllPlaylistVideos = async () => {
     setSyncingVideos(true);
     try {
-      const { data: playlists } = await supabase
-        .from('playlists')
-        .select('id, youtube_playlist_url')
-        .not('youtube_playlist_url', 'is', null);
-
-      if (!playlists) return;
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const apiUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/fetch-playlist`;
-
-      for (const playlist of playlists) {
-        if (playlist.youtube_playlist_url) {
-          await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              playlistUrl: playlist.youtube_playlist_url,
-              playlistId: playlist.id,
-            }),
-          });
-        }
-      }
-
-      alert('Successfully synced all playlist videos!');
+      // Mock implementation - no actual syncing needed
+      setTimeout(() => {
+        alert('Successfully synced all playlist videos!');
+        setSyncingVideos(false);
+      }, 1000);
     } catch (error) {
       console.error('Error syncing videos:', error);
       alert('Failed to sync videos. Please try again.');
-    } finally {
       setSyncingVideos(false);
     }
   };
 
   const loadDashboardData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      // Mock implementation - load from mock data
+      const allLoops = await mockLoops.getAll();
+      
+      // Transform mock loops to dashboard structure
+      const loopsWithPlaylists = allLoops.map((loop: any) => ({
+        id: loop.id,
+        title: loop.name,
+        thumbnail_url: null,
+        status: 'draft' as const,
+        sub_discipline_id: loop.discipline_id,
+        sub_discipline_name: loop.description,
+        primary_discipline_name: 'Learning',
+        subject_name: loop.name,
+        playlists: loop.videos.map((v: any, idx: number) => ({
+          id: v.id,
+          title: v.title,
+          url: v.url,
+          order_index: idx,
+          primary_discipline_name: 'Learning',
+          sub_discipline_name: loop.description,
+          specific_topic: v.title,
+          hashtags: [],
+        }))
+      }));
 
-      const { data: disciplinesData } = await supabase
-        .from('creator_disciplines')
-        .select(`
-          primary_disciplines (
-            name
-          )
-        `)
-        .eq('creator_id', user.id)
-        .order('display_order');
-
-      const disciplineNames = disciplinesData?.map(d => (d.primary_disciplines as any).name) || [];
-      setSections(disciplineNames);
-
-      const { data: loopsData } = await supabase
-        .from('loops')
-        .select(`
-          *,
-          sub_disciplines (
-            name,
-            primary_disciplines (
-              name
-            )
-          )
-        `)
-        .eq('creator_profile_id', user.id)
-        .order('order_index');
-
-      if (loopsData) {
-        const loopsWithPlaylists = await Promise.all(
-          loopsData.map(async (loop) => {
-            const { data: loopPlaylists } = await supabase
-              .from('loop_playlists')
-              .select(`
-                playlists (
-                  id,
-                  title,
-                  url,
-                  specific_topic,
-                  primary_disciplines (
-                    name
-                  ),
-                  sub_disciplines (
-                    name
-                  )
-                ),
-                order_index
-              `)
-              .eq('loop_id', loop.id)
-              .order('order_index');
-
-            const playlistsWithHashtags = await Promise.all(
-              (loopPlaylists || []).map(async (lp) => {
-                const playlistId = (lp.playlists as any).id;
-
-                const { data: hashtagData } = await supabase
-                  .from('topic_hashtags')
-                  .select('hashtag')
-                  .eq('playlist_id', playlistId);
-
-                return {
-                  id: playlistId,
-                  title: (lp.playlists as any).title,
-                  url: (lp.playlists as any).url,
-                  order_index: lp.order_index,
-                  primary_discipline_name: ((lp.playlists as any).primary_disciplines as any)?.name || null,
-                  sub_discipline_name: ((lp.playlists as any).sub_disciplines as any)?.name || null,
-                  specific_topic: (lp.playlists as any).specific_topic || null,
-                  hashtags: hashtagData?.map(h => h.hashtag) || [],
-                };
-              })
-            );
-
-            return {
-              id: loop.id,
-              title: loop.title,
-              thumbnail_url: loop.thumbnail_url,
-              status: loop.status,
-              sub_discipline_id: loop.sub_discipline_id,
-              sub_discipline_name: (loop.sub_disciplines as any)?.name || null,
-              primary_discipline_name: ((loop.sub_disciplines as any)?.primary_disciplines as any)?.name || null,
-              subject_name: loop.subject_name,
-              playlists: playlistsWithHashtags,
-            };
-          })
-        );
-
-        setLoops(loopsWithPlaylists);
-      }
+      setLoops(loopsWithPlaylists);
+      
+      // Extract unique sections from loops
+      const uniqueSections = [...new Set(loopsWithPlaylists.map(l => l.primary_discipline_name))];
+      setSections(uniqueSections);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -247,12 +156,12 @@ export default function CreatorDashboard({ onClose, onLoopCreated, initialLoopId
 
   const handleRemovePlaylist = async (loopId: string, playlistId: string) => {
     try {
-      await supabase
-        .from('loop_playlists')
-        .delete()
-        .eq('loop_id', loopId)
-        .eq('playlist_id', playlistId);
-
+      // Update local state
+      setLoops(loops.map(loop =>
+        loop.id === loopId
+          ? { ...loop, playlists: loop.playlists.filter(p => p.id !== playlistId) }
+          : loop
+      ));
       await loadDashboardData();
     } catch (error) {
       console.error('Error removing playlist:', error);
@@ -266,35 +175,6 @@ export default function CreatorDashboard({ onClose, onLoopCreated, initialLoopId
         return;
       }
 
-      const { data: subDisciplines, error: fetchError } = await supabase
-        .from('sub_disciplines')
-        .select('id')
-        .eq('primary_discipline_id', primaryDisciplineId)
-        .limit(1);
-
-      if (fetchError) {
-        console.error('Error fetching sub-disciplines:', fetchError);
-        throw fetchError;
-      }
-
-      if (subDisciplines && subDisciplines.length > 0) {
-        const { error: updateError } = await supabase
-          .from('loops')
-          .update({
-            sub_discipline_id: subDisciplines[0].id,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', loopId);
-
-        if (updateError) {
-          console.error('Error updating loop:', updateError);
-          throw updateError;
-        }
-      } else {
-        alert('No sub-discipline found for the selected section');
-        return;
-      }
-
       setEditingLoopSectionId(null);
       await loadDashboardData();
     } catch (error: any) {
@@ -305,11 +185,6 @@ export default function CreatorDashboard({ onClose, onLoopCreated, initialLoopId
 
   const handleLoopTitleChange = async (loopId: string, title: string) => {
     try {
-      await supabase
-        .from('loops')
-        .update({ title, updated_at: new Date().toISOString() })
-        .eq('id', loopId);
-
       setLoops(loops.map(loop =>
         loop.id === loopId ? { ...loop, title } : loop
       ));
@@ -320,11 +195,7 @@ export default function CreatorDashboard({ onClose, onLoopCreated, initialLoopId
 
   const handleRemoveLoop = async (loopId: string) => {
     try {
-      await supabase
-        .from('loops')
-        .delete()
-        .eq('id', loopId);
-
+      await mockLoops.delete(loopId);
       await loadDashboardData();
       onLoopCreated();
     } catch (error) {
@@ -344,45 +215,16 @@ export default function CreatorDashboard({ onClose, onLoopCreated, initialLoopId
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alert('You must be logged in to upload a thumbnail');
-        return;
-      }
-
-      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const fileName = `${user.id}/${loopId}-${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('loop-thumbnails')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw new Error(uploadError.message);
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('loop-thumbnails')
-        .getPublicUrl(fileName);
-
-      const { error: updateError } = await supabase
-        .from('loops')
-        .update({
-          thumbnail_url: publicUrl,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', loopId);
-
-      if (updateError) {
-        console.error('Update error:', updateError);
-        throw new Error(updateError.message);
-      }
-
-      await loadDashboardData();
+      // Mock implementation - simulate thumbnail URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageUrl = e.target?.result as string;
+        setLoops(loops.map(loop =>
+          loop.id === loopId ? { ...loop, thumbnail_url: imageUrl } : loop
+        ));
+        alert('Thumbnail uploaded successfully!');
+      };
+      reader.readAsDataURL(file);
     } catch (error: any) {
       console.error('Error uploading thumbnail:', error);
       alert(`Failed to upload thumbnail: ${error.message || 'Unknown error'}. Please try again.`);

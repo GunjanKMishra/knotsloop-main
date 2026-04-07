@@ -1,6 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+// This file is kept for backward compatibility
+// All functionality is now provided by mockData.ts
+// No Supabase client needed - using mock data with localStorage persistence
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://placeholder.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'placeholder-key';
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = null;

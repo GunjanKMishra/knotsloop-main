@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { User } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { users as mockUsers } from '../../lib/mockData';
 import { SignupData } from '../CreatorSignup';
 
 interface ProfileDetailsStepProps {
@@ -33,34 +33,8 @@ export default function ProfileDetailsStep({
 
   const loadProfileData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        setLoadingData(false);
-        return;
-      }
-
-      const { data: profileData } = await supabase
-        .from('creator_profiles')
-        .select('name, headline, biography, website, linkedin')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (profileData) {
-        setName(profileData.name || '');
-        setHeadline(profileData.headline || '');
-        setBiography(profileData.biography || '');
-        setWebsite(profileData.website || '');
-        setLinkedin(profileData.linkedin || '');
-
-        updateData({
-          name: profileData.name || '',
-          headline: profileData.headline || '',
-          biography: profileData.biography || '',
-          website: profileData.website || '',
-          linkedin: profileData.linkedin || '',
-        });
-      }
+      // Mock implementation - no need to load profile data
+      setLoadingData(false);
     } catch (err) {
       console.error('Error loading profile data:', err);
     } finally {
@@ -73,24 +47,6 @@ export default function ProfileDetailsStep({
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) throw new Error('User not authenticated');
-
-      const { error: updateError } = await supabase
-        .from('creator_profiles')
-        .update({
-          name,
-          headline,
-          biography,
-          website,
-          linkedin,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
       updateData({ name, headline, biography, website, linkedin });
       onNext();
     } catch (err: unknown) {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Play, Square, Sun, Eye, User, ArrowLeft } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { loops as mockLoops } from '../lib/mockData';
 import VideoPlayer from './VideoPlayer';
 
 interface Video {
@@ -46,54 +46,30 @@ export default function LoopsPage({ onBack }: LoopsPageProps) {
 
   const fetchLoops = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: loopsData, error: loopsError } = await supabase
-        .from('loops')
-        .select('id, title, order_index')
-        .eq('creator_profile_id', user.id)
-        .order('order_index');
-
-      if (loopsError) throw loopsError;
-
-      const loopsWithKnots = await Promise.all(
-        (loopsData || []).map(async (loop) => {
-          const { data: loopPlaylists } = await supabase
-            .from('loop_playlists')
-            .select('playlist_id, order_index')
-            .eq('loop_id', loop.id)
-            .order('order_index');
-
-          const knots = await Promise.all(
-            (loopPlaylists || []).map(async (lp) => {
-              const { data: playlist } = await supabase
-                .from('playlists')
-                .select('id, title')
-                .eq('id', lp.playlist_id)
-                .single();
-
-              const { data: videos } = await supabase
-                .from('playlist_videos')
-                .select('*')
-                .eq('playlist_id', lp.playlist_id)
-                .order('order_index');
-
-              return {
-                id: playlist?.id || '',
-                title: playlist?.title || '',
-                order_index: lp.order_index,
-                videos: videos || [],
-              };
-            })
-          );
-
-          return {
-            ...loop,
-            knots,
-          };
-        })
-      );
+      // Fetch loops from mock data
+      const allLoops = await mockLoops.getAll();
+      
+      // Transform mock loops to match UI structure
+      const loopsWithKnots: Loop[] = allLoops.map((loop: any) => ({
+        id: loop.id,
+        title: loop.name,
+        order_index: 0,
+        knots: [
+          {
+            id: `knot-${loop.id}`,
+            title: loop.description,
+            order_index: 0,
+            videos: loop.videos.map((v: any) => ({
+              id: v.id,
+              title: v.title,
+              url: v.url,
+              video_id: v.id,
+              order_index: 0,
+              duration: v.duration
+            }))
+          }
+        ]
+      }));
 
       setLoops(loopsWithKnots);
       if (loopsWithKnots.length > 0) {

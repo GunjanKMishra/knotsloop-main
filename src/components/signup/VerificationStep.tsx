@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { User, Youtube, Tag, Check } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { disciplines as mockDisciplines } from '../../lib/mockData';
 import { SignupData } from '../CreatorSignup';
 
 interface VerificationStepProps {
@@ -28,29 +28,10 @@ export default function VerificationStep({
 
   const loadContentTags = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: disciplinesData } = await supabase
-        .from('creator_disciplines')
-        .select('primary_discipline_id, primary_disciplines(name)')
-        .eq('creator_id', user.id);
-
-      const { data: domainsData } = await supabase
-        .from('content_domains')
-        .select('domain_type')
-        .eq('creator_id', user.id);
-
-      if (disciplinesData) {
-        const disciplineNames = disciplinesData
-          .map((d: any) => d.primary_disciplines?.name)
-          .filter(Boolean);
-        setDisciplines(disciplineNames);
-      }
-
-      if (domainsData) {
-        setContentDomains(domainsData.map(d => d.domain_type));
-      }
+      const allDisciplines = await mockDisciplines.getAll();
+      const disciplineNames = allDisciplines.map(d => d.name);
+      setDisciplines(disciplineNames);
+      setContentDomains(['Learning', 'Development']);
     } catch (err) {
       console.error('Error loading content tags:', err);
     } finally {
@@ -63,20 +44,6 @@ export default function VerificationStep({
     setError('');
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) throw new Error('User not authenticated');
-
-      const { error: updateError } = await supabase
-        .from('creator_profiles')
-        .update({
-          onboarding_completed: true,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
       onComplete();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'An error occurred');
